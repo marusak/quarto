@@ -67,13 +67,54 @@ class Game extends React.Component {
         this.state = {
           gameSquares: Array(16).fill('field'),
           stackSquares: this.initial_board,
+          selected: -1,
+          moveFirst: true,
+          status: "Player one selects piece"
         };
     }
 
     handleGameBoard = (x,y) => {
+        if (!this.state.selected === -1)
+            return;
+        if (this.state.gameSquares[x*4+y] !== 'field')
+            return;
+        const gameSquares = this.state.gameSquares.slice();
+        const stackSquares = this.state.stackSquares.slice();
+        var lst = stackSquares[this.state.selected].split(" ")
+        lst.pop();
+        stackSquares[this.state.selected] = "field";
+        gameSquares[x*4+y] = lst.join(" ");
+        if (this.state.moveFirst)
+            var status = "Player one selects piece"
+        else
+            var status = "Player two selects piece"
+
+        this.setState({
+            gameSquares: gameSquares,
+            stackSquares: stackSquares,
+            selected: -1,
+            status: status,
+        });
     };
 
     handlePiecesBoard = (x,y) => {
+        if (this.state.selected !== -1)
+            return;
+        if (this.state.stackSquares[x*4+y] === 'field')
+            return;
+
+        if (this.state.moveFirst)
+            var status = "Player two places piece";
+        else
+            var status = "Player one places piece";
+
+
+        this.setState({
+            selected: x*4+y,
+            moveFirst: !this.state.moveFirst,
+            status: status,
+        });
+
         const squares = this.state.stackSquares.slice().map(function(old){
             var index = old.indexOf('selected');
             if (index !== -1){
@@ -94,6 +135,9 @@ class Game extends React.Component {
     render() {
         return (
             <div className='container'>
+                <div className='row'>
+                    {this.state.status}
+                </div>
                 <div className='row'>
                     <Board onClick={this.handleGameBoard} value={this.state.gameSquares}/>
                     <Board onClick={this.handlePiecesBoard} value={this.state.stackSquares}/>
