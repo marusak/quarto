@@ -9,11 +9,86 @@
     height: 50px;
     width: 50px;
     background: none;
+    background-color: #994d00;
     border: solid;
     border-radius: 5px;
     border-width: 1px;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 .selected {
-    background: blue;
+    background-color: #6DB3F2;
+}
+
+/* pieces
+ * w/b - white/black
+ * c/s - circle/square
+ * l/s - large/small
+ * f/h - full/hole
+ */
+
+.wclf {
+    background-image: url('/assets/wclf.png');
+    background-size: 50px 50px;
+}
+.wclh {
+    background-image: url('/assets/wclh.png');
+    background-size: 50px 50px;
+}
+.wcsf {
+    background-image: url('/assets/wclf.png');
+    background-size: 25px 25px;
+}
+.wcsh {
+    background-image: url('/assets/wclh.png');
+    background-size: 25px 25px;
+}
+.wslf {
+    background-image: url('/assets/wslf.png');
+    background-size: 50px 50px;
+}
+.wslh {
+    background-image: url('/assets/wslh.png');
+    background-size: 50px 50px;
+}
+.wssf {
+    background-image: url('/assets/wslf.png');
+    background-size: 25px 25px;
+}
+.wssh {
+    background-image: url('/assets/wslh.png');
+    background-size: 25px 25px;
+}
+.bclf {
+    background-image: url('/assets/bclf.png');
+    background-size: 50px 50px;
+}
+.bclh {
+    background-image: url('/assets/bclh.png');
+    background-size: 50px 50px;
+}
+.bcsf {
+    background-image: url('/assets/bclf.png');
+    background-size: 25px 25px;
+}
+.bcsh {
+    background-image: url('/assets/bclh.png');
+    background-size: 25px 25px;
+}
+.bslf {
+    background-image: url('/assets/bslf.png');
+    background-size: 50px 50px;
+}
+.bslh {
+    background-image: url('/assets/bslh.png');
+    background-size: 50px 50px;
+}
+.bssf {
+    background-image: url('/assets/bslf.png');
+    background-size: 25px 25px;
+}
+.bssh {
+    background-image: url('/assets/bslh.png');
+    background-size: 25px 25px;
 }

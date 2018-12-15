@@ -44,11 +44,29 @@ class Board extends React.Component {
 }
 
 class Game extends React.Component {
+    initial_board = ['field wclf',
+                     'field wclh',
+                     'field wcsf',
+                     'field wcsh',
+                     'field wslf',
+                     'field wslh',
+                     'field wssf',
+                     'field wssh',
+                     'field bclf',
+                     'field bclh',
+                     'field bcsf',
+                     'field bcsh',
+                     'field bslf',
+                     'field bslh',
+                     'field bssf',
+                     'field bssh',
+    ]
+
     constructor(props){
         super(props);
         this.state = {
           gameSquares: Array(16).fill('field'),
-          stackSquares: Array(16).fill('field'),
+          stackSquares: this.initial_board,
         };
     }
 
@@ -56,8 +74,18 @@ class Game extends React.Component {
     };
 
     handlePiecesBoard = (x,y) => {
-        const squares = this.state.stackSquares.slice();
-        squares[x*4+y] = 'field selected';
+        const squares = this.state.stackSquares.slice().map(function(old){
+            var index = old.indexOf('selected');
+            if (index !== -1){
+                var lst = old.split(" ")
+                lst.pop();
+                return lst.join(" ");
+            }
+            else
+                return old;
+        });
+
+        squares[x*4+y] = squares[x*4+y] + ' selected';
         this.setState({
             stackSquares: squares,
         });
