@@ -62,6 +62,34 @@ class Game extends React.Component {
                      'field bssh',
     ]
 
+    win_lines = [[0,1,2,3],
+                 [4,5,6,7],
+                 [8,9,10,11],
+                 [12,13,14,15],
+                 [0,4,8,12],
+                 [1,5,9,13],
+                 [2,6,10,14],
+                 [3,7,11,15],
+                 [0,5,10,15],
+                 [3,6,9,12],
+    ]
+
+    testWin(board) {
+        for (var i = 0; i < this.win_lines.length; i++){
+            var f1 = board[this.win_lines[i][0]];
+            var f2 = board[this.win_lines[i][1]];
+            var f3 = board[this.win_lines[i][2]];
+            var f4 = board[this.win_lines[i][3]];
+            if (f1 === 'field' || f2 === 'field' || f3 === 'field' || f4 === 'field')
+                continue;
+            for (var j=6; j < 10; j++){
+                if (f1[j] === f2[j] && f3[j] === f4[j] && f2[j] === f3[j])
+                    return true;
+            }
+        }
+        return false;
+    }
+
     constructor(props){
         super(props);
         this.state = {
@@ -69,11 +97,14 @@ class Game extends React.Component {
           stackSquares: this.initial_board,
           selected: -1,
           moveFirst: true,
-          status: "Player one selects piece"
+          status: "Player one selects piece",
+          won: false,
         };
     }
 
     handleGameBoard = (x,y) => {
+        if (this.state.won)
+            return;
         if (!this.state.selected === -1)
             return;
         if (this.state.gameSquares[x*4+y] !== 'field')
@@ -85,19 +116,33 @@ class Game extends React.Component {
         stackSquares[this.state.selected] = "field";
         gameSquares[x*4+y] = lst.join(" ");
         if (this.state.moveFirst)
-            var status = "Player one selects piece"
+            var status = "Player one selects piece";
         else
-            var status = "Player two selects piece"
+            var status = "Player two selects piece";
+
+        if (this.testWin(gameSquares)){
+            if (this.state.moveFirst)
+                var status = "Player one won!";
+            else
+                var status = "Player two won!";
+            var won = true;
+        } else
+            var won = false;
+
 
         this.setState({
             gameSquares: gameSquares,
             stackSquares: stackSquares,
             selected: -1,
             status: status,
+            won: won,
         });
+
     };
 
     handlePiecesBoard = (x,y) => {
+        if (this.state.won)
+            return;
         if (this.state.selected !== -1)
             return;
         if (this.state.stackSquares[x*4+y] === 'field')
