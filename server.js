@@ -1,4 +1,6 @@
 const io = require('socket.io')();
+const express = require('express');
+const app = express();
 
 const winLines = [[0, 1, 2, 3],
   [4, 5, 6, 7],
@@ -152,5 +154,9 @@ io.on('connection', (socket) => {
 });
 
 reset();
-const port = 1337;
-io.listen(port);
+
+const server = app.listen(process.env.PORT || 1337);
+if(process.env.NODE_ENV === 'production'){
+    app.use(express.static('quarto/build'));
+}
+io.listen(server);

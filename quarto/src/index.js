@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import openSocket from 'socket.io-client';
+import io from 'socket.io-client';
 
 class Board extends React.Component {
   renderRow(i) {
@@ -54,7 +54,7 @@ class Game extends React.Component {
       status: 'Waiting for opponent to connect',
       position: null,
       turn: null,
-      socket: openSocket('http://localhost:1337'),
+      socket: io.connect(),
     };
     this.state.socket.on('turn', (who) => {
       let status = '';
