@@ -54,7 +54,7 @@ class Game extends React.Component {
       status: 'Waiting for opponent to connect',
       position: null,
       turn: null,
-      socket: openSocket('http://localhost:1337'),
+      socket: openSocket('https://quarto-app.herokuapp.com:1337'),
     };
     this.state.socket.on('turn', (who) => {
       let status = '';
