@@ -1,5 +1,6 @@
 const io = require('socket.io')();
 const express = require('express');
+
 const app = express();
 
 const winLines = [[0, 1, 2, 3],
@@ -32,13 +33,6 @@ const initBoard = ['field wclf',
   'field bssh',
 ];
 
-const players = { one: null, two: null };
-let player = 'one';
-let gameSquares = Array(16).fill('field');
-let stackSquares = Array(16).fill('field');
-let selected = -1;
-let won = false;
-
 function testWin(board) {
   for (let i = 0; i < winLines.length; i += 1) {
     const f1 = board[winLines[i][0]];
@@ -55,88 +49,101 @@ function testWin(board) {
 }
 
 
-function reset() {
-  gameSquares = Array(16).fill('field');
-  stackSquares = initBoard;
-  selected = -1;
-  won = false;
-  players.one = null;
-  players.two = null;
-  player = 'one';
-}
-
-io.on('connection', (socket) => {
-  if (players.one == null) {
-    players.one = socket;
-    socket.emit('position', 'one');
-  } else if (players.two == null) {
-    players.two = socket;
-    io.emit('stackSquares', initBoard);
-    socket.emit('position', 'two');
-    io.emit('turn', 'one');
-  } else {
-    socket.disconnect();
+class Game {
+  constructor() {
+    this.players = { one: null, two: null };
+    this.player = 'one';
+    this.gameSquares = Array(16).fill('field');
+    this.stackSquares = initBoard;
+    this.selected = -1;
+    this.won = false;
   }
 
-  socket.on('disconnect', () => {
-    if (players.one === socket) {
-      players.one = null;
-    } else if (players.two === socket) {
-      players.two = null;
+  broadcastInGame(key, value) {
+    this.players.one.emit(key, value);
+    this.players.two.emit(key, value);
+  }
+
+  hasFree(socket) {
+    if (this.players.one == null) {
+      this.players.one = socket;
+      this.players.one.on('handleGameBoard', (x, y) => {
+        if (this.player !== 'one') {
+          return;
+        }
+        this.handleGameBoard(x, y);
+      });
+      this.players.one.on('handlePieceBoard', (x, y) => {
+        if (this.player !== 'one') {
+          return;
+        }
+        this.handlePieceBoard(x, y);
+      });
+      this.players.one.emit('stackSquares', initBoard);
+      this.players.one.emit('position', 'one');
+      return true;
+    } if (this.players.two == null) {
+      this.players.two = socket;
+      this.players.two.on('handleGameBoard', (x, y) => {
+        if (this.player !== 'two') {
+          return;
+        }
+        this.handleGameBoard(x, y);
+      });
+      this.players.two.on('handlePieceBoard', (x, y) => {
+        if (this.player !== 'two') {
+          return;
+        }
+        this.handlePieceBoard(x, y);
+      });
+      this.players.two.emit('stackSquares', initBoard);
+      this.players.two.emit('position', 'two');
+      this.startGame();
+      return true;
     }
-  });
+    return false;
+  }
 
-  socket.on('handleGameBoard', (x, y) => {
-    if (players[player] !== socket) {
+
+  startGame() {
+    this.broadcastInGame('turn', 'one');
+  }
+
+  handleGameBoard(x, y) {
+    if (this.won) return;
+
+    if (this.selected === -1) return;
+
+    if (this.gameSquares[x * 4 + y] !== 'field') return;
+
+    this.gameSquares[x * 4 + y] = this.stackSquares[this.selected];
+    this.broadcastInGame('gameSquares', this.gameSquares);
+
+    this.stackSquares[this.selected] = 'field';
+    this.broadcastInGame('stackSquares', this.stackSquares);
+
+    this.selected = -1;
+    this.broadcastInGame('selected', this.selected);
+
+    if (testWin(this.gameSquares)) {
+      this.won = true;
+      this.broadcastInGame('won', true);
       return;
-    }
-
-    if ((players.one == null) || (players.two == null)) {
-      return;
-    }
-
-    if (won) return;
-
-    if (selected === -1) return;
-
-    if (gameSquares[x * 4 + y] !== 'field') return;
-
-    gameSquares[x * 4 + y] = stackSquares[selected];
-    io.emit('gameSquares', gameSquares);
-
-    stackSquares[selected] = 'field';
-    io.emit('stackSquares', stackSquares);
-
-    selected = -1;
-    io.emit('selected', selected);
-
-    if (testWin(gameSquares)) {
-      won = true;
-      io.emit('won', true);
-      return;
-    } won = false;
-  });
+    } this.won = false;
+  }
 
 
-  socket.on('handlePieceBoard', (x, y) => {
-    if (players[player] !== socket) {
-      return;
-    }
+  handlePieceBoard(x, y) {
+    if (this.won) return;
 
-    if ((players.one == null) || (players.two == null)) {
-      return;
-    }
+    if (this.selected !== -1) return;
 
-    if (won) return;
+    if (this.stackSquares[x * 4 + y] === 'field') return;
 
-    if (selected !== -1) return;
+    this.selected = x * 4 + y;
+    this.broadcastInGame('selected', this.selected);
 
-    if (stackSquares[x * 4 + y] === 'field') return;
-
-    selected = x * 4 + y;
-    io.emit('selected', selected);
-
-    const squares = stackSquares.slice().map((old) => {
+    const squares = this.stackSquares.slice().map((old) => {
       const index = old.indexOf('selected');
       if (index !== -1) {
         const lst = old.split(' ');
@@ -147,16 +154,27 @@ io.on('connection', (socket) => {
     });
 
     squares[x * 4 + y] = `${squares[x * 4 + y]} selected`;
-    io.emit('stackSquares', squares);
-    player = player === 'one' ? 'two' : 'one';
-    io.emit('turn', player);
+    this.broadcastInGame('stackSquares', squares);
+    this.player = this.player === 'one' ? 'two' : 'one';
+    this.broadcastInGame('turn', this.player);
+  }
+}
+
+const games = [new Game()];
+
+io.on('connection', (socket) => {
+  if (!games[games.length - 1].hasFree(socket)) {
+    games.push(new Game());
+    games[games.length - 1].hasFree(socket);
+  }
+
+  socket.on('disconnect', () => {
+    // TODO remove from game and remove game?
   });
 });
 
-reset();
-
 const server = app.listen(process.env.PORT || 1337);
-if(process.env.NODE_ENV === 'production'){
-    app.use(express.static('quarto/build'));
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static('quarto/build'));
 }
 io.listen(server);
